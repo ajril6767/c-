@@ -13,18 +13,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check files
-        shell: cmd
-        run: |
-          dir
-          echo.
-          echo === Recursive files ===
-          dir /s /b
+- name: Show files
+  shell: cmd
+  run: |
+    echo Current directory:
+    cd
+    echo.
+    echo Files:
+    dir /s /b
 
-      - name: Compile
-        shell: cmd
-        run: |
-          g++ main.cpp -o program.exe
+- name: Compile
+  shell: cmd
+  run: |
+    g++ main.cpp -o program.exe
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
