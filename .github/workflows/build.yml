@@ -13,6 +13,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check files
+        shell: cmd
+        run: |
+          dir
+          echo.
+          echo === Recursive files ===
+          dir /s /b
+
       - name: Compile
         shell: cmd
         run: |
