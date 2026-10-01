@@ -11,52 +11,62 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Download repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Find C++ source
-        shell: cmd
+      - name: Find C++ files
+        shell: pwsh
         run: |
-          echo ===== C++ FILES =====
-          dir /s /b *.cpp
-          echo ====================
+          Write-Host "=== FILE CPP ==="
 
-      - name: Build EXE
-        shell: cmd
+          $files = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Filter "*.cpp" -Recurse
+
+          if ($files.Count -eq 0) {
+              Write-Host "ERROR: Tidak ada file .cpp!"
+              exit 1
+          }
+
+          foreach ($file in $files) {
+              Write-Host $file.FullName
+          }
+
+          Write-Host "================"
+
+      - name: Compile
+        shell: pwsh
         run: |
-          setlocal EnableDelayedExpansion
-          set "SOURCE="
+          $files = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Filter "*.cpp" -Recurse
 
-          for /r %%F in (*.cpp) do (
-            if not defined SOURCE set "SOURCE=%%F"
-          )
+          Write-Host "Menggunakan file:"
+          $files | ForEach-Object {
+              Write-Host $_.FullName
+          }
 
-          if not defined SOURCE (
-            echo.
-            echo ERROR: Tidak ada file .cpp di repository!
-            exit /b 1
-          )
+          $sourceFiles = $files.FullName
 
-          echo Source ditemukan:
-          echo !SOURCE!
-          echo.
-
-          g++ "!SOURCE!" ^
-            -o program.exe ^
-            -static ^
-            -static-libgcc ^
-            -static-libstdc++ ^
+          g++ $sourceFiles `
+            -o "$env:GITHUB_WORKSPACE\program.exe" `
+            -static `
+            -static-libgcc `
+            -static-libstdc++ `
             -static-libwinpthread
 
-          if errorlevel 1 (
-            echo.
-            echo ERROR: Compile gagal.
-            exit /b 1
-          )
+          if ($LASTEXITCODE -ne 0) {
+              Write-Host "COMPILATION GAGAL"
+              exit 1
+          }
 
-          echo.
-          echo BUILD BERHASIL!
-          dir program.exe
+          Write-Host "BUILD BERHASIL"
+
+      - name: Verify
+        shell: pwsh
+        run: |
+          if (!(Test-Path "$env:GITHUB_WORKSPACE\program.exe")) {
+              Write-Host "program.exe tidak ditemukan!"
+              exit 1
+          }
+
+          Get-Item "$env:GITHUB_WORKSPACE\program.exe"
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
