@@ -11,13 +11,23 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Create C++ source
+        shell: cmd
+        run: |
+          echo #include ^<iostream^> > main.cpp
+          echo. >> main.cpp
+          echo int main^(^) { >> main.cpp
+          echo     std::cout ^<^< "Hello World!" ^<^< std::endl; >> main.cpp
+          echo     return 0; >> main.cpp
+          echo } >> main.cpp
 
       - name: Build EXE
         shell: cmd
         run: |
-          g++ "%GITHUB_WORKSPACE%\main.cpp" -o "%GITHUB_WORKSPACE%\program.exe"
+          g++ main.cpp -o program.exe
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
