@@ -14,59 +14,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Find C++ files
+      - name: Find C++ file
         shell: pwsh
         run: |
-          Write-Host "=== FILE CPP ==="
-
           $files = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Filter "*.cpp" -Recurse
 
           if ($files.Count -eq 0) {
-              Write-Host "ERROR: Tidak ada file .cpp!"
+              Write-Host "Tidak ada file .cpp!"
               exit 1
           }
-
-          foreach ($file in $files) {
-              Write-Host $file.FullName
-          }
-
-          Write-Host "================"
-
-      - name: Compile
-        shell: pwsh
-        run: |
-          $files = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Filter "*.cpp" -Recurse
 
           Write-Host "Menggunakan file:"
           $files | ForEach-Object {
               Write-Host $_.FullName
           }
 
-          $sourceFiles = $files.FullName
+      - name: Compile
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Filter "*.cpp" -Recurse
+          $source = $files[0].FullName
 
-          g++ $sourceFiles `
+          g++ "$source" `
             -o "$env:GITHUB_WORKSPACE\program.exe" `
             -static `
             -static-libgcc `
-            -static-libstdc++ `
-            -static-libwinpthread
+            -static-libstdc++
 
           if ($LASTEXITCODE -ne 0) {
               Write-Host "COMPILATION GAGAL"
               exit 1
           }
 
-          Write-Host "BUILD BERHASIL"
-
-      - name: Verify
-        shell: pwsh
-        run: |
-          if (!(Test-Path "$env:GITHUB_WORKSPACE\program.exe")) {
-              Write-Host "program.exe tidak ditemukan!"
-              exit 1
-          }
-
-          Get-Item "$env:GITHUB_WORKSPACE\program.exe"
+          Write-Host "BUILD BERHASIL!"
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
