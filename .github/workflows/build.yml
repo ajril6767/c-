@@ -1,27 +1,61 @@
 name: Build C++ EXE
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout
+      - name: Download repository
         uses: actions/checkout@v4
+
+      - name: Find C++ source
+        shell: cmd
+        run: |
+          echo ===== C++ FILES =====
+          dir /s /b *.cpp
+          echo ====================
 
       - name: Build EXE
         shell: cmd
         run: |
-          g++ main.cpp -o program.exe -static-libgcc -static-libstdc++
+          setlocal EnableDelayedExpansion
+          set "SOURCE="
 
-      - name: Check EXE
-        shell: cmd
-        run: |
+          for /r %%F in (*.cpp) do (
+            if not defined SOURCE set "SOURCE=%%F"
+          )
+
+          if not defined SOURCE (
+            echo.
+            echo ERROR: Tidak ada file .cpp di repository!
+            exit /b 1
+          )
+
+          echo Source ditemukan:
+          echo !SOURCE!
+          echo.
+
+          g++ "!SOURCE!" ^
+            -o program.exe ^
+            -static ^
+            -static-libgcc ^
+            -static-libstdc++ ^
+            -static-libwinpthread
+
+          if errorlevel 1 (
+            echo.
+            echo ERROR: Compile gagal.
+            exit /b 1
+          )
+
+          echo.
+          echo BUILD BERHASIL!
           dir program.exe
 
       - name: Upload EXE
